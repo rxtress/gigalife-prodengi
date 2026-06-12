@@ -248,6 +248,65 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 /* ── character idle bounce ── */
 @keyframes idleBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 #char-canvas{animation:idleBounce 1.8s ease-in-out infinite}
+
+/* ══ MOBILE ══ */
+@media (max-width:768px){
+  html{font-size:14px}
+
+  /* ─ menu ─ */
+  #scr-menu{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:28px 16px 40px;gap:20px}
+  .logo{font-size:2.1rem;letter-spacing:1px}
+  .menu-sub{font-size:.85rem;letter-spacing:2px}
+  .quest-grid{grid-template-columns:1fr;gap:14px}
+  .quest-card{padding:20px}
+  .quest-card:hover{transform:none}
+  .qc-title{font-size:1.3rem}
+
+  /* ─ top bar ─ */
+  .res-bar{flex-direction:column;height:auto;padding:8px 10px;gap:7px;align-items:stretch}
+  .res-logo{font-size:.95rem;flex:none;text-align:center}
+  .stat-cards{width:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .stat-card{min-width:0;padding:6px 3px 7px;border-radius:10px;gap:2px}
+  .sc-top{gap:4px;max-width:100%}
+  .sc-icon{font-size:.95rem}
+  .sc-label{font-size:.46rem;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sc-value{font-size:1.05rem}
+  .sc-bar{width:85%}
+
+  /* ─ game ─ */
+  #scr-game{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .game-main{flex-direction:column;align-items:center;gap:10px;padding:12px;overflow:visible;flex:none}
+  .char-area{width:auto;justify-content:center;padding-bottom:0}
+  #char-canvas{width:66px;height:88px}
+  .char-name{margin-top:5px;font-size:.78rem}
+  .emo-bubble{top:-6px;right:-26px;font-size:1.4rem}
+  .text-area{width:100%;justify-content:flex-start}
+  .speech-card{padding:16px 18px}
+  .speech-card::before{display:none}
+  .step-text{font-size:1.1rem;line-height:1.6}
+  .hint-txt{font-size:.85rem}
+  .choices-area{padding:0 12px 18px}
+  .choice-btn{font-size:1rem;padding:12px 14px}
+  .choice-btn:hover{padding-left:14px;background:rgba(33,160,56,.1);border-color:rgba(33,160,56,.3);box-shadow:none}
+  .choice-btn:hover::before{opacity:0}
+  .choice-btn:active{background:rgba(33,160,56,.25);border-color:var(--pri);box-shadow:0 0 20px var(--glo)}
+
+  /* ─ popup ─ */
+  .cons-card{padding:24px 20px;width:92%}
+  .cons-text{font-size:1rem;line-height:1.7}
+
+  /* ─ ending ─ */
+  #scr-end{overflow-y:auto;-webkit-overflow-scrolling:touch;align-items:center;justify-content:flex-start}
+  .end-wrap{padding:28px 16px 40px;gap:18px}
+  .end-title{font-size:1.6rem}
+  .end-text{font-size:1.02rem}
+  .end-scores{gap:18px;padding:18px 22px}
+
+  /* ─ toasts ─ */
+  #toasts{top:auto;bottom:14px;left:12px;right:12px;align-items:flex-end}
+  .toast{max-width:none;width:100%}
+}
 </style>
 </head>
 <body>
