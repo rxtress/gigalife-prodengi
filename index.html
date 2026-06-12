@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GigaLife: PROденьги</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:18px}
+:root{
+  --pri:#21A038;--sec:#5BDB6F;--acc:#FFD700;
+  --dan:#FF4B6B;--suc:#00E676;--war:#FF9900;
+  --bg:#0B1810;--cbg:#142019;--cbrd:rgba(33,160,56,.28);
+  --txt:#FFF;--dim:#8BB895;--glo:rgba(33,160,56,.32)
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font-family:'Courier New',monospace}
+
+.grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(circle,rgba(33,160,56,.1) 1px,transparent 1px);
+  background-size:40px 40px}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:1;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px)}
+
+.screen{position:fixed;inset:0;display:none;flex-direction:column;z-index:10}
+.screen.active{display:flex}
+
+/* ══ MENU ══ */
+#scr-menu{
+  background:
+    radial-gradient(ellipse at 15% 90%,rgba(33,160,56,.28) 0%,transparent 50%),
+    radial-gradient(ellipse at 85% 10%,rgba(91,219,111,.16) 0%,transparent 50%),
+    var(--bg);
+  align-items:center;justify-content:center;gap:28px;padding:32px
+}
+.logo{font-size:clamp(3rem,6vw,5rem);font-weight:700;letter-spacing:2px;
+  text-shadow:0 0 24px var(--pri),0 0 60px var(--pri)}
+.logo span{color:var(--acc);text-shadow:0 0 24px var(--acc)}
+.menu-sub{color:var(--dim);font-size:1.1rem;letter-spacing:4px;text-transform:uppercase;margin-top:6px;text-align:center}
+.quest-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;max-width:980px;width:100%}
+
+.quest-card{background:var(--cbg);border:1px solid var(--cbrd);border-radius:18px;padding:28px;
+  cursor:pointer;transition:all .25s ease;position:relative;overflow:hidden;
+  display:flex;flex-direction:column}
+.quest-card::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--pri) 0%,transparent 60%);opacity:0;transition:opacity .25s}
+.quest-card:hover{transform:translateY(-6px);border-color:var(--pri);box-shadow:0 10px 44px var(--glo)}
+.quest-card:hover::after{opacity:.08}
+.qc-num{font-size:.85rem;color:var(--sec);letter-spacing:3px;text-transform:uppercase;margin-bottom:7px}
+.qc-title{font-size:1.55rem;font-weight:700;margin-bottom:12px;line-height:1.3}
+.qc-desc{font-size:1rem;color:var(--dim);line-height:1.65;margin-bottom:16px;flex:1}
+.qc-diff{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.82rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:auto}
+.d-easy{background:rgba(0,230,118,.15);color:#00E676;border:1px solid #00E676}
+.d-med {background:rgba(255,153,0,.15);color:#FF9900;border:1px solid #FF9900}
+.d-hard{background:rgba(255,75,107,.15);color:#FF4B6B;border:1px solid #FF4B6B}
+
+/* ══ INTRO ══ */
+#scr-intro{background:var(--bg);align-items:center;justify-content:center;text-align:center}
+.intro-wrap{animation:zoomIn .5s ease}
+@keyframes zoomIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.intro-label{font-size:.95rem;color:var(--sec);letter-spacing:5px;text-transform:uppercase;margin-bottom:14px}
+.intro-big{font-size:clamp(2.8rem,5.5vw,4rem);font-weight:700;text-shadow:0 0 34px var(--pri);margin-bottom:10px}
+.intro-small{font-size:1.35rem;color:var(--dim);margin-bottom:38px}
+.intro-bar-outer{width:200px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin:0 auto;overflow:hidden}
+.intro-bar-inner{height:100%;width:0;background:var(--pri);border-radius:2px;box-shadow:0 0 8px var(--pri);transition:width 1.8s linear}
+
+/* ══ GAME ══ */
+#scr-game{background:var(--bg)}
+
+/* ─ resource bar ─ */
+.res-bar{
+  display:flex;align-items:center;padding:0 24px;height:84px;
+  background:rgba(14,28,18,.97);border-bottom:2px solid var(--cbrd);
+  gap:14px;flex-shrink:0;backdrop-filter:blur(12px);overflow:hidden
+}
+.res-logo{font-size:1.2rem;font-weight:700;flex:1;letter-spacing:1px;white-space:nowrap;min-width:0}
+.res-logo span{color:var(--acc)}
+
+/* Stat cards — top right, big and visible */
+.stat-cards{display:flex;gap:8px;flex-shrink:0}
+
+.stat-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;
+  background:rgba(33,160,56,.12);
+  border:1.5px solid rgba(33,160,56,.3);
+  border-radius:14px;
+  padding:8px 14px 10px;
+  min-width:112px;
+  position:relative;
+  overflow:hidden;
+  transition:border-color .3s,box-shadow .3s
+}
+.stat-card.cash-card{border-color:rgba(255,215,0,.35);background:rgba(255,215,0,.08)}
+.stat-card.ment-card{border-color:rgba(127,232,255,.3);background:rgba(127,232,255,.07)}
+.stat-card.know-card{border-color:rgba(184,255,127,.3);background:rgba(184,255,127,.07)}
+.stat-card.cred-card{border-color:rgba(255,159,127,.35);background:rgba(255,159,127,.07)}
+.sc-value.cred-c{color:#FF9F7F}
+
+.sc-top{display:flex;align-items:center;gap:7px}
+.sc-icon{font-size:1.4rem}
+.sc-label{font-size:.68rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.sc-value{font-size:1.65rem;font-weight:700;line-height:1;letter-spacing:.5px}
+.sc-value.cash-c{color:var(--acc)}
+.sc-value.ment-c{color:#7FE8FF}
+.sc-value.know-c{color:#B8FF7F}
+
+.sc-bar{width:96px;height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-top:2px}
+.sc-bar-f{height:100%;border-radius:3px;transition:width .6s ease}
+.sc-bar-m{background:#7FE8FF;box-shadow:0 0 5px #7FE8FF}
+.sc-bar-k{background:#B8FF7F;box-shadow:0 0 5px #B8FF7F}
+.sc-bar-c{background:#FF9F7F;box-shadow:0 0 5px #FF9F7F}
+
+/* ─ game content ─ */
+.game-main{display:flex;flex:1;gap:22px;padding:20px;overflow:hidden}
+
+.char-area{display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-end;width:136px;flex-shrink:0;padding-bottom:8px;position:relative}
+#char-canvas{image-rendering:pixelated;image-rendering:crisp-edges;
+  width:120px;height:160px;
+  filter:drop-shadow(0 0 18px rgba(33,160,56,.65));transition:filter .4s}
+.char-name{margin-top:9px;font-size:.88rem;color:var(--sec);letter-spacing:2px;text-transform:uppercase}
+.emo-bubble{position:absolute;top:4px;right:-4px;font-size:1.8rem;animation:float 2.5s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+
+.text-area{flex:1;display:flex;flex-direction:column;gap:14px;justify-content:center;min-width:0}
+.speech-card{
+  background:var(--cbg);border:1px solid var(--cbrd);border-radius:18px;
+  padding:26px 32px;position:relative;
+  box-shadow:0 4px 32px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.04)
+}
+.speech-card::before{
+  content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);
+  border:12px solid transparent;border-right-color:var(--cbg)
+}
+.step-badge{
+  display:inline-block;padding:4px 13px;border-radius:5px;
+  font-size:.78rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:13px
+}
+.b-choice{background:rgba(33,160,56,.25);color:var(--pri);border:1px solid var(--pri)}
+.b-event {background:rgba(255,153,0,.25);color:var(--war);border:1px solid var(--war)}
+.b-crisis{background:rgba(255,75,107,.25);color:var(--dan);border:1px solid var(--dan)}
+.b-info  {background:rgba(91,219,111,.18);color:var(--sec);border:1px solid var(--sec)}
+.b-end   {background:rgba(0,230,118,.2); color:var(--suc);border:1px solid var(--suc)}
+
+.step-text{font-size:1.45rem;line-height:1.78;color:var(--txt)}
+
+.hint-panel{background:rgba(91,219,111,.06);border:1px solid rgba(91,219,111,.22);
+  border-radius:11px;padding:13px 18px;display:flex;gap:11px;align-items:flex-start}
+.hint-ico{font-size:1.05rem;flex-shrink:0;margin-top:3px}
+.hint-txt{font-size:.95rem;color:rgba(139,184,149,.95);line-height:1.65}
+
+/* ─ choices ─ */
+.choices-area{padding:0 22px 18px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.choice-btn{
+  background:rgba(33,160,56,.1);border:1px solid rgba(33,160,56,.3);
+  border-radius:11px;padding:14px 22px;color:var(--txt);font-family:inherit;
+  font-size:1.18rem;cursor:pointer;text-align:left;transition:all .18s ease;
+  line-height:1.5;position:relative;overflow:hidden
+}
+.choice-btn::before{
+  content:'▶';position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  color:var(--pri);opacity:0;transition:opacity .18s
+}
+.choice-btn:hover{
+  background:rgba(33,160,56,.22);border-color:var(--pri);
+  box-shadow:0 0 20px var(--glo);padding-left:40px
+}
+.choice-btn:hover::before{opacity:1}
+
+/* ══ CONSEQUENCE POPUP ══ */
+.cons-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.76);
+  display:flex;align-items:center;justify-content:center;z-index:900;
+  backdrop-filter:blur(6px);animation:fadeIn .2s ease
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.cons-card{
+  background:var(--cbg);border:1px solid var(--cbrd);border-radius:22px;
+  padding:36px 46px;max-width:520px;width:90%;text-align:center;
+  box-shadow:0 8px 60px rgba(0,0,0,.7);animation:popIn .3s ease
+}
+@keyframes popIn{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
+.cons-text{font-size:1.12rem;line-height:1.8;color:var(--txt);margin-bottom:22px}
+.cons-stats{display:flex;gap:14px;justify-content:center;margin-bottom:26px;flex-wrap:wrap}
+.cons-stat{font-size:1.1rem;font-weight:700;padding:7px 18px;border-radius:9px}
+.cs-pos{color:var(--suc);background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.3)}
+.cs-neg{color:var(--dan);background:rgba(255,75,107,.12);border:1px solid rgba(255,75,107,.3)}
+.cons-btn{
+  background:var(--pri);color:#fff;border:none;border-radius:9px;
+  padding:13px 40px;font-family:inherit;font-size:1rem;cursor:pointer;
+  letter-spacing:1px;box-shadow:0 4px 18px var(--glo);transition:all .2s
+}
+.cons-btn:hover{background:#28C046;transform:translateY(-2px)}
+
+/* ══ ENDING ══ */
+#scr-end{background:var(--bg);align-items:center;justify-content:center}
+.end-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:24px;
+  max-width:620px;padding:40px;text-align:center;animation:zoomIn .5s ease
+}
+#end-canvas{image-rendering:pixelated;width:120px;height:160px}
+.end-title{font-size:2.1rem;font-weight:700}
+.end-text{font-size:1.18rem;color:var(--dim);line-height:1.78;max-width:490px}
+.end-scores{
+  display:flex;gap:32px;background:var(--cbg);border:1px solid var(--cbrd);
+  border-radius:16px;padding:24px 40px
+}
+.es-item{display:flex;flex-direction:column;align-items:center;gap:8px}
+.es-ico{font-size:1.6rem}
+.es-bar-out{
+  width:64px;height:88px;background:rgba(255,255,255,.05);
+  border-radius:5px;display:flex;flex-direction:column;justify-content:flex-end;
+  overflow:hidden;border:1px solid rgba(255,255,255,.08)
+}
+.es-bar-in{width:100%;border-radius:5px 5px 0 0;transition:height 1.2s ease;height:0%}
+.es-num{font-size:1.1rem;font-weight:700;color:var(--acc)}
+.end-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.btn-pri{
+  background:var(--pri);color:#fff;border:none;border-radius:9px;
+  padding:14px 34px;font-family:inherit;font-size:1.05rem;cursor:pointer;
+  letter-spacing:1px;box-shadow:0 4px 20px var(--glo);transition:all .2s
+}
+.btn-pri:hover{background:#28C046;transform:translateY(-2px)}
+.btn-sec{
+  background:transparent;color:var(--dim);border:1px solid rgba(255,255,255,.22);
+  border-radius:9px;padding:14px 34px;font-family:inherit;font-size:1.05rem;
+  cursor:pointer;letter-spacing:1px;transition:all .2s
+}
+.btn-sec:hover{border-color:var(--dim);color:var(--txt);transform:translateY(-2px)}
+
+/* ══ TOASTS ══ */
+#toasts{position:fixed;top:94px;right:22px;display:flex;flex-direction:column;gap:8px;z-index:1000;pointer-events:none}
+.toast{
+  background:var(--cbg);border:1px solid var(--cbrd);border-radius:11px;
+  padding:11px 17px;min-width:200px;max-width:300px;
+  animation:toastIn .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.55)
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(24px)}}
+.toast.hide{animation:toastOut .3s ease forwards}
+.t-line{font-size:.9rem;padding:2px 0}
+.t-pos{color:var(--suc)}.t-neg{color:var(--dan)}.t-neu{color:var(--dim)}
+
+/* ── stat card flash animation ── */
+@keyframes statPop{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+.stat-pop{animation:statPop .35s ease}
+
+/* ── character idle bounce ── */
+@keyframes idleBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+#char-canvas{animation:idleBounce 1.8s ease-in-out infinite}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="scanlines"></div>
+
+<!-- Bank city background -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMax slice"
+  style="position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:0.48;pointer-events:none">
+  <defs>
+    <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#020906"/>
+      <stop offset="60%" stop-color="#071510"/>
+      <stop offset="100%" stop-color="#0D2818"/>
+    </linearGradient>
+    <linearGradient id="gBank" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E3D2C"/>
+      <stop offset="100%" stop-color="#0D1E16"/>
+    </linearGradient>
+    <linearGradient id="gGlow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#21A038" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#21A038" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="gLamp" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFE88A" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFE88A" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur2"><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1920" height="1080" fill="url(#gSky)"/>
+
+  <!-- Stars -->
+  <g fill="#AAFFCC" opacity="0.7">
+    <circle cx="120" cy="60" r="1.2"/><circle cx="340" cy="30" r="1"/><circle cx="590" cy="90" r="1.4"/>
+    <circle cx="780" cy="45" r="1"/><circle cx="950" cy="20" r="1.5"/><circle cx="1100" cy="70" r="1.1"/>
+    <circle cx="1300" cy="35" r="1.3"/><circle cx="1520" cy="55" r="1"/><circle cx="1700" cy="25" r="1.4"/>
+    <circle cx="1850" cy="80" r="1.2"/><circle cx="210" cy="130" r="0.9"/><circle cx="460" cy="110" r="1.1"/>
+    <circle cx="670" cy="150" r="0.8"/><circle cx="870" cy="100" r="1.2"/><circle cx="1050" cy="140" r="0.9"/>
+    <circle cx="1250" cy="115" r="1"/><circle cx="1430" cy="95" r="1.3"/><circle cx="1620" cy="130" r="0.8"/>
+    <circle cx="1800" cy="110" r="1.1"/><circle cx="50" cy="190" r="0.9"/><circle cx="430" cy="170" r="1"/>
+  </g>
+
+  <!-- Moon -->
+  <circle cx="1750" cy="100" r="38" fill="#1E3D2C" opacity="0.9"/>
+  <circle cx="1766" cy="88" r="34" fill="#B8FFCC" opacity="0.13"/>
+
+  <!-- Background city skyline LEFT -->
+  <g fill="#0C1F14" opacity="0.8">
+    <rect x="0" y="480" width="90" height="600"/><rect x="80" y="430" width="70" height="650"/>
+    <rect x="140" y="500" width="50" height="580"/><rect x="180" y="460" width="80" height="620"/>
+    <rect x="250" y="510" width="60" height="570"/><rect x="300" y="440" width="100" height="640"/>
+    <rect x="390" y="470" width="55" height="610"/><rect x="435" y="520" width="70" height="560"/>
+  </g>
+  <!-- Background city skyline RIGHT -->
+  <g fill="#0C1F14" opacity="0.8">
+    <rect x="1390" y="490" width="70" height="590"/><rect x="1450" y="450" width="90" height="630"/>
+    <rect x="1530" y="510" width="60" height="570"/><rect x="1580" y="460" width="80" height="620"/>
+    <rect x="1650" y="480" width="100" height="600"/><rect x="1740" y="500" width="55" height="580"/>
+    <rect x="1785" y="440" width="70" height="640"/><rect x="1845" y="515" width="75" height="565"/>
+  </g>
+
+  <!-- Subtle windows on city buildings LEFT -->
+  <g fill="#21A038" opacity="0.25">
+    <rect x="92" y="450" width="8" height="10"/><rect x="105" y="450" width="8" height="10"/>
+    <rect x="92" y="470" width="8" height="10"/><rect x="105" y="470" width="8" height="10"/>
+    <rect x="190" y="480" width="8" height="10"/><rect x="204" y="480" width="8" height="10"/>
+    <rect x="190" y="500" width="8" height="10"/><rect x="204" y="500" width="8" height="10"/>
+    <rect x="310" y="460" width="8" height="10"/><rect x="325" y="460" width="8" height="10"/>
+    <rect x="310" y="480" width="8" height="10"/><rect x="325" y="480" width="8" height="10"/>
+  </g>
+  <!-- Subtle windows on city buildings RIGHT -->
+  <g fill="#21A038" opacity="0.25">
+    <rect x="1460" y="470" width="8" height="10"/><rect x="1474" y="470" width="8" height="10"/>
+    <rect x="1460" y="490" width="8" height="10"/><rect x="1474" y="490" width="8" height="10"/>
+    <rect x="1590" y="480" width="8" height="10"/><rect x="1604" y="480" width="8" height="10"/>
+    <rect x="1660" y="500" width="8" height="10"/><rect x="1674" y="500" width="8" height="10"/>
+  </g>
+
+  <!-- Ground glow -->
+  <rect x="560" y="800" width="800" height="280" fill="url(#gGlow)" opacity="0.6" filter="url(#blur6)"/>
+
+  <!-- ═══ CENTRAL BANK BUILDING ═══ -->
+  <!-- Wide base steps -->
+  <rect x="480" y="900" width="960" height="30" fill="#152E1E"/>
+  <rect x="510" y="870" width="900" height="35" fill="#183524"/>
+  <rect x="550" y="840" width="820" height="35" fill="#1C3D28"/>
+
+  <!-- Main building body -->
+  <rect x="580" y="440" width="760" height="400" fill="url(#gBank)"/>
+
+  <!-- Pediment (triangle) -->
+  <polygon points="560,440 960,280 1360,440" fill="#1A3828"/>
+  <!-- Pediment border -->
+  <polygon points="560,440 960,280 1360,440" fill="none" stroke="#21A038" stroke-width="2.5" opacity="0.6"/>
+
+  <!-- Frieze below pediment -->
+  <rect x="560" y="436" width="800" height="18" fill="#1F4030"/>
+  <!-- Frieze decorative line -->
+  <rect x="560" y="436" width="800" height="3" fill="#21A038" opacity="0.5"/>
+  <rect x="560" y="451" width="800" height="3" fill="#21A038" opacity="0.3"/>
+
+  <!-- COLUMNS (7 columns) -->
+  <g fill="#234F35">
+    <rect x="600" y="454" width="28" height="386"/>
+    <rect x="715" y="454" width="28" height="386"/>
+    <rect x="830" y="454" width="28" height="386"/>
+    <rect x="946" y="454" width="28" height="386"/>
+    <rect x="1062" y="454" width="28" height="386"/>
+    <rect x="1178" y="454" width="28" height="386"/>
+    <rect x="1292" y="454" width="28" height="386"/>
+  </g>
+  <!-- Column highlights -->
+  <g fill="#2E6644" opacity="0.5">
+    <rect x="600" y="454" width="5" height="386"/>
+    <rect x="715" y="454" width="5" height="386"/>
+    <rect x="830" y="454" width="5" height="386"/>
+    <rect x="946" y="454" width="5" height="386"/>
+    <rect x="1062" y="454" width="5" height="386"/>
+    <rect x="1178" y="454" width="5" height="386"/>
+    <rect x="1292" y="454" width="5" height="386"/>
+  </g>
+
+  <!-- Column capitals (tops) -->
+  <g fill="#2A5C40">
+    <rect x="594" y="448" width="40" height="10"/>
+    <rect x="709" y="448" width="40" height="10"/>
+    <rect x="824" y="448" width="40" height="10"/>
+    <rect x="940" y="448" width="40" height="10"/>
+    <rect x="1056" y="448" width="40" height="10"/>
+    <rect x="1172" y="448" width="40" height="10"/>
+    <rect x="1286" y="448" width="40" height="10"/>
+  </g>
+  <!-- Column bases -->
+  <g fill="#2A5C40">
+    <rect x="594" y="830" width="40" height="12"/>
+    <rect x="709" y="830" width="40" height="12"/>
+    <rect x="824" y="830" width="40" height="12"/>
+    <rect x="940" y="830" width="40" height="12"/>
+    <rect x="1056" y="830" width="40" height="12"/>
+    <rect x="1172" y="830" width="40" height="12"/>
+    <rect x="1286" y="830" width="40" height="12"/>
+  </g>
+
+  <!-- Bank sign panel -->
+  <rect x="700" y="680" width="520" height="80" fill="#0D2016" rx="4"/>
+  <rect x="700" y="680" width="520" height="80" fill="none" stroke="#21A038" stroke-width="2" rx="4" opacity="0.7"/>
+  <text x="960" y="732" text-anchor="middle" font-family="Georgia,serif" font-size="46" font-weight="bold"
+    fill="#21A038" opacity="0.9" letter-spacing="8">GIGABANK</text>
+
+  <!-- Main door -->
+  <rect x="890" y="760" width="140" height="82" fill="#0A1A10" rx="3"/>
+  <rect x="890" y="760" width="140" height="82" fill="none" stroke="#21A038" stroke-width="1.5" rx="3" opacity="0.5"/>
+  <!-- Door glow -->
+  <rect x="895" y="765" width="130" height="72" fill="#21A038" opacity="0.04"/>
+
+  <!-- Windows LEFT wing -->
+  <g opacity="0.55">
+    <rect x="640" y="520" width="50" height="65" fill="#FFE870" opacity="0.12" rx="2"/>
+    <rect x="640" y="520" width="50" height="65" fill="none" stroke="#FFE870" stroke-width="1.2" rx="2" opacity="0.35"/>
+    <rect x="710" y="520" width="50" height="65" fill="#21A038" opacity="0.1" rx="2"/>
+    <rect x="710" y="520" width="50" height="65" fill="none" stroke="#21A038" stroke-width="1.2" rx="2" opacity="0.35"/>
+    <rect x="640" y="610" width="50" height="65" fill="#21A038" opacity="0.08" rx="2"/>
+    <rect x="640" y="610" width="50" height="65" fill="none" stroke="#21A038" stroke-width="1.2" rx="2" opacity="0.3"/>
+    <rect x="710" y="610" width="50" height="65" fill="#FFE870" opacity="0.1" rx="2"/>
+    <rect x="710" y="610" width="50" height="65" fill="none" stroke="#FFE870" stroke-width="1.2" rx="2" opacity="0.3"/>
+  </g>
+  <!-- Windows RIGHT wing -->
+  <g opacity="0.55">
+    <rect x="1120" y="520" width="50" height="65" fill="#21A038" opacity="0.1" rx="2"/>
+    <rect x="1120" y="520" width="50" height="65" fill="none" stroke="#21A038" stroke-width="1.2" rx="2" opacity="0.35"/>
+    <rect x="1190" y="520" width="50" height="65" fill="#FFE870" opacity="0.12" rx="2"/>
+    <rect x="1190" y="520" width="50" height="65" fill="none" stroke="#FFE870" stroke-width="1.2" rx="2" opacity="0.35"/>
+    <rect x="1120" y="610" width="50" height="65" fill="#FFE870" opacity="0.1" rx="2"/>
+    <rect x="1120" y="610" width="50" height="65" fill="none" stroke="#FFE870" stroke-width="1.2" rx="2" opacity="0.3"/>
+    <rect x="1190" y="610" width="50" height="65" fill="#21A038" opacity="0.08" rx="2"/>
+    <rect x="1190" y="610" width="50" height="65" fill="none" stroke="#21A038" stroke-width="1.2" rx="2" opacity="0.3"/>
+  </g>
+
+  <!-- Pediment ornament -->
+  <text x="960" y="370" text-anchor="middle" font-family="Georgia,serif" font-size="36" fill="#21A038" opacity="0.5">✦</text>
+
+  <!-- Lamp posts -->
+  <g fill="#1C3828">
+    <rect x="508" y="730" width="8" height="140"/><rect x="1404" y="730" width="8" height="140"/>
+  </g>
+  <circle cx="512" cy="730" r="14" fill="url(#gLamp)" filter="url(#blur2)"/>
+  <circle cx="1408" cy="730" r="14" fill="url(#gLamp)" filter="url(#blur2)"/>
+  <circle cx="512" cy="730" r="5" fill="#FFE88A" opacity="0.8"/>
+  <circle cx="1408" cy="730" r="5" fill="#FFE88A" opacity="0.8"/>
+
+  <!-- Ground line -->
+  <rect x="0" y="928" width="1920" height="152" fill="#07130D"/>
+  <rect x="0" y="926" width="1920" height="3" fill="#21A038" opacity="0.3"/>
+
+  <!-- Stock chart line at bottom -->
+  <polyline points="0,980 100,970 200,985 280,960 380,975 480,955 560,965 650,940 740,955 830,945 920,960 1010,935 1100,950 1190,930 1280,945 1380,925 1470,940 1560,918 1650,932 1740,910 1830,925 1920,905"
+    fill="none" stroke="#21A038" stroke-width="2" opacity="0.35"/>
+</svg>
+
+<!-- ════ MENU ════ -->
+<div id="scr-menu" class="screen active">
+  <div style="text-align:center">
+    <div class="logo">GigaLife: <span>PRO</span>деньги</div>
+    <p class="menu-sub">Симулятор финансовой грамотности &nbsp;·&nbsp; Выберите квест</p>
+  </div>
+  <div class="quest-grid" id="quest-grid"></div>
+</div>
+
+<!-- ════ INTRO ════ -->
+<div id="scr-intro" class="screen">
+  <div class="intro-wrap">
+    <div class="intro-label" id="intro-label">КВЕСТ 1</div>
+    <div class="intro-big"   id="intro-big">Название</div>
+    <div class="intro-small" id="intro-small">Подзаголовок</div>
+    <div class="intro-bar-outer"><div class="intro-bar-inner" id="intro-bar"></div></div>
+  </div>
+</div>
+
+<!-- ════ GAME ════ -->
+<div id="scr-game" class="screen">
+
+  <!-- top bar with stats -->
+  <div class="res-bar">
+    <div class="res-logo">GigaLife: <span>PRO</span>деньги</div>
+
+    <div class="stat-cards">
+      <!-- CASH → КАПИТАЛ -->
+      <div class="stat-card cash-card">
+        <div class="sc-top">
+          <span class="sc-icon">💰</span>
+          <span class="sc-label">КАПИТАЛ</span>
+        </div>
+        <div class="sc-value cash-c" id="r-cash">₽52 000</div>
+      </div>
+
+      <!-- MENTAL → СЧАСТЬЕ -->
+      <div class="stat-card ment-card">
+        <div class="sc-top">
+          <span class="sc-icon">😊</span>
+          <span class="sc-label">СЧАСТЬЕ</span>
+        </div>
+        <div class="sc-value ment-c" id="r-mental">50</div>
+        <div class="sc-bar"><div class="sc-bar-f sc-bar-m" id="bar-m" style="width:50%"></div></div>
+      </div>
+
+      <!-- KNOWLEDGE → FinIQ -->
+      <div class="stat-card know-card">
+        <div class="sc-top">
+          <span class="sc-icon">🧠</span>
+          <span class="sc-label">FinIQ</span>
+        </div>
+        <div class="sc-value know-c" id="r-know">0</div>
+        <div class="sc-bar"><div class="sc-bar-f sc-bar-k" id="bar-k" style="width:0%"></div></div>
+      </div>
+
+      <!-- CREDIT SCORE (новый) -->
+      <div class="stat-card cred-card">
+        <div class="sc-top">
+          <span class="sc-icon">💳</span>
+          <span class="sc-label">CREDIT SCORE</span>
+        </div>
+        <div class="sc-value cred-c" id="r-cred">700</div>
+        <div class="sc-bar"><div class="sc-bar-f sc-bar-c" id="bar-c" style="width:73%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="game-main" id="game-main">
+    <div class="char-area">
+      <div class="emo-bubble" id="emo-bubble">💭</div>
+      <canvas id="char-canvas" width="12" height="16"></canvas>
+      <div class="char-name">Алексей</div>
+    </div>
+    <div class="text-area">
+      <div class="speech-card">
+        <div class="step-badge b-choice" id="step-badge">ВЫБОР</div>
+        <p class="step-text" id="step-text">Загрузка...</p>
+      </div>
+      <div class="hint-panel" id="hint-panel" style="display:none">
+        <span class="hint-ico">💡</span>
+        <span class="hint-txt" id="hint-txt"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="choices-area" id="choices-area"></div>
+</div>
+
+<!-- ════ ENDING ════ -->
+<div id="scr-end" class="screen">
+  <div class="end-wrap">
+    <canvas id="end-canvas" width="12" height="16" style="image-rendering:pixelated;width:120px;height:160px"></canvas>
+    <div class="end-title" id="end-title">ИТОГ</div>
+    <div class="end-text"  id="end-text">...</div>
+    <div class="end-scores">
+      <div class="es-item">
+        <span class="es-ico">💰</span>
+        <div class="es-bar-out"><div class="es-bar-in" id="esb-cash"  style="background:var(--acc)"></div></div>
+        <span class="es-num" id="esn-cash">0</span>
+      </div>
+      <div class="es-item">
+        <span class="es-ico">😌</span>
+        <div class="es-bar-out"><div class="es-bar-in" id="esb-ment"  style="background:#7FE8FF"></div></div>
+        <span class="es-num" id="esn-ment">0</span>
+      </div>
+      <div class="es-item">
+        <span class="es-ico">🧠</span>
+        <div class="es-bar-out"><div class="es-bar-in" id="esb-know"  style="background:#B8FF7F"></div></div>
+        <span class="es-num" id="esn-know">0</span>
+      </div>
+    </div>
+    <div class="end-btns" id="end-btns"></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  GAME DATA
+// ══════════════════════════════════════════════════════════════
+const SCENARIOS=[
+  {
+    id:"first_salary",title:"Первая зарплата",subtitle:"Испытание бюджетом",
+    desc:"Ты только что получил первую настоящую зарплату — 52 000 ₽. Сможешь распределить деньги так, чтобы хватило на всё важное и осталось на мечту?",
+    difficulty:"легкий",startCash:52000,bg:"rgba(33,80,45,.35)",
+    steps:[
+      {id:1,type:"choice",
+       text:"Поздравляю! На твой цифровой кошелёк упало 52 000 ₽ — первая зарплата в дизайн-студии GigaArt. Уведомления: аренда — 15 000 ₽, продукты — 10 000 ₽, связь — 1 000 ₽. После обязательных платежей остаётся 26 000 ₽. Как распределишь свободные деньги?",
+       hint:"Обязательные платежи — это фиксированные расходы. Они повторяются каждый месяц. Свободный остаток — зона твоего выбора.",
+       options:[
+         {text:"Создам бюджет: 10 000 ₽ — в подушку, 8 000 ₽ — на курс по 3D, 8 000 ₽ — на развлечения",cashChange:-26000,mentalChange:15,knowledgeChange:20,consequence:"Ты действуешь как финансовый стратег. Резерв создан, знания прокачиваются, и ты не остался без удовольствий.",next:2},
+         {text:"Потрачу всё на крутые кроссовки (12 000 ₽) и вечеринки с друзьями (14 000 ₽)",cashChange:-26000,mentalChange:20,knowledgeChange:-10,consequence:"Кроссовки огонь, вечеринка запомнится. Но подушки безопасности нет, и месяц ещё не кончился...",next:3},
+         {text:"Отложу всё 26 000 ₽ — буду жить максимально экономно, откажусь даже от кафе",cashChange:0,mentalChange:-20,knowledgeChange:5,consequence:"Экономия — хорошо, но жёсткий отказ от всего снижает мотивацию. Баланс важен!",next:4}
+       ]},
+      {id:2,type:"event",
+       text:"Через три недели ноутбук для работы сломался — нужен срочный ремонт за 18 000 ₽. В подушке безопасности лежит 10 000 ₽. Не хватает 8 000 ₽. Что предпримешь?",
+       hint:"Подушка безопасности предназначена именно для таких ситуаций. Рекомендуемый размер — 3–6 месячных расходов.",
+       options:[
+         {text:"Использую 10 000 ₽ из подушки и попрошу 8 000 ₽ в долг у друга — верну со следующей зарплаты",cashChange:-18000,mentalChange:-10,knowledgeChange:15,consequence:"Разумное решение: резерв по назначению и беспроцентный долг. Главное — вернуть вовремя.",next:"end_good"},
+         {text:"Возьму микрозайм онлайн — там дают быстро, прямо с телефона",cashChange:-18000,mentalChange:-25,knowledgeChange:-15,consequence:"Микрозаймы — ловушка: ставки достигают 365% годовых. Долг в 8 000 ₽ через месяц превратится в 16 000 ₽.",next:"end_bad"},
+         {text:"Продам ненужные вещи на маркетплейсе и добавлю к подушке",cashChange:-10000,mentalChange:5,knowledgeChange:20,consequence:"Отличный ход! Нестандартный источник дохода без долгов.",next:"end_excellent"}
+       ]},
+      {id:3,type:"event",
+       text:"Конец месяца. Деньги на еду заканчиваются, а зарплата через 5 дней. Нет ни резерва, ни сбережений. Как выйдешь из ситуации?",
+       hint:"Отсутствие подушки превращает любую неожиданность в кризис. Это классическая ловушка нулевого баланса.",
+       options:[
+         {text:"Попрошу помощи у родителей и пообещаю себе создать резерв с первой зарплаты",cashChange:5000,mentalChange:-20,knowledgeChange:20,consequence:"Вышел из ситуации, но урок получен болезненно. Со следующей зарплаты — строить бюджет правильно.",next:"end_medium"},
+         {text:"Возьму кредитку — банк прислал предложение с лимитом 30 000 ₽",cashChange:5000,mentalChange:-30,knowledgeChange:-20,consequence:"Кредитка решила проблему сейчас, но создала новую. Если не погасить в льготный период — от 25% годовых.",next:"end_bad"}
+       ]},
+      {id:4,type:"event",
+       text:"Ты живёшь в жёсткой экономии. Но через месяц обнаруживаешь: купил ненужных вещей на 15 000 ₽ во время стресса. Компульсивные покупки. Что дальше?",
+       hint:"Полный запрет на удовольствия провоцирует срывы. Здоровый бюджет включает статью «на себя» — обычно 10–15% дохода.",
+       options:[
+         {text:"Пересмотрю бюджет: добавлю статью на развлечения, чтобы избежать срывов",cashChange:0,mentalChange:20,knowledgeChange:25,consequence:"Мудрое решение! Гибкий бюджет с запланированными радостями устойчивее жёсткого запрета.",next:"end_good"},
+         {text:"Буду ещё строже — проблема в слабой воле",cashChange:0,mentalChange:-30,knowledgeChange:-10,consequence:"Воля — не единственный инструмент. Системный подход к бюджету надёжнее самопринуждения.",next:"end_bad"}
+       ]},
+      {id:"end_excellent",type:"ending",emotion:"happy",text:"🏆 Финансовый мастер! Ты не только грамотно распределил бюджет, но и нашёл нестандартный выход из кризиса без долгов. Рейтинг финансовой грамотности — максимум!",score:{cash:85,mental:90,knowledge:95}},
+      {id:"end_good",type:"ending",emotion:"happy",text:"✅ Уверенный старт! Ты допустил небольшие ошибки, но справился достойно. Подушка безопасности работает. В следующем месяце увеличь резерв до 3 месячных расходов.",score:{cash:70,mental:65,knowledge:75}},
+      {id:"end_medium",type:"ending",emotion:"neutral",text:"⚠️ Урок получен. Запомни главное правило: сначала плати себе — откладывай в резерв сразу после получения зарплаты, до всех других трат.",score:{cash:50,mental:40,knowledge:60}},
+      {id:"end_bad",type:"ending",emotion:"sad",text:"❌ Долговая спираль. Изучи правило 50/30/20: 50% — на нужды, 30% — на желания, 20% — на сбережения. Начни заново — ты уже знаешь, как не надо!",score:{cash:20,mental:15,knowledge:30}}
+    ]
+  },
+  {
+    id:"credit_trap",title:"Кредитный соблазн",subtitle:"Кредит, мошенники и выбор",
+    desc:"Твой друг щеголяет новым смартфоном за 130 000 ₽. Банки наперебой предлагают займы. Но так ли выгодны их условия, как кажется?",
+    difficulty:"средний",startCash:30000,bg:"rgba(20,45,70,.4)",
+    steps:[
+      {id:1,type:"choice",
+       text:"HorizonX Pro стоит 130 000 ₽. У тебя 30 000 ₽ накоплений. Банк GigaCredit: 100 000 ₽ на 24 мес. под 22% годовых. Платёж ≈ 5 200 ₽/мес., переплата — 24 800 ₽. Твой доход — 28 000 ₽/мес. Что выберешь?",
+       hint:"Перед кредитом всегда считай полную стоимость кредита (ПСК) — итоговую сумму с процентами и комиссиями.",
+       options:[
+         {text:"Возьму кредит — хочу телефон прямо сейчас, переплата 24 800 ₽ кажется терпимой",cashChange:-5200,mentalChange:10,knowledgeChange:-10,consequence:"Телефон в руках, но ты отдал банку почти 25 000 ₽ сверху — почти месячная зарплата.",next:2},
+         {text:"Буду откладывать 10 000 ₽ в месяц — куплю за 10 месяцев без переплаты",cashChange:10000,mentalChange:-5,knowledgeChange:20,consequence:"Терпение стоит 24 800 ₽ экономии. Через 10 месяцев — тот же телефон без долгов.",next:"end_wise"},
+         {text:"Гляну предложение FastCash — там обещают «0% кредит»",cashChange:0,mentalChange:5,knowledgeChange:-5,consequence:"Внимание: «0% кредит» в рекламе почти всегда скрывает комиссии или завышенную страховку.",next:5}
+       ]},
+      {id:2,type:"event",
+       text:"Прошло 4 месяца, ты исправно платишь. Вдруг звонит «служба безопасности банка GigaCredit»: «Подозрительная активность! Срочно продиктуйте код из СМС!» Как поступишь?",
+       hint:"Настоящий банк НИКОГДА не просит назвать код из СМС, CVV или пин-код. Это вишинг — голосовой фишинг.",
+       options:[
+         {text:"Положу трубку и перезвоню в банк по номеру с оборотной стороны карты",cashChange:0,mentalChange:10,knowledgeChange:25,creditScoreChange:15,consequence:"Верное решение! В банке подтвердили: это мошенники. Твои данные в безопасности.",next:3},
+         {text:"Продиктую код — звонок выглядит очень официально",cashChange:-30000,mentalChange:-50,knowledgeChange:-20,creditScoreChange:-120,consequence:"Мошенники получили доступ к счёту и украли 30 000 ₽. Немедленно сообщи в банк и полицию!",next:"end_scam"}
+       ]},
+      {id:3,type:"crisis",
+       text:"На 7-м месяце тебя сократили. Дохода нет, следующий платёж — через 10 дней. Просрочка испортит кредитную историю. Что делаешь?",
+       hint:"Кредитная история — твоё финансовое досье. Просрочки остаются до 7 лет и влияют на аренду, кредиты, даже трудоустройство.",
+       options:[
+         {text:"Обращусь в банк за кредитными каникулами или реструктуризацией — закон это позволяет",cashChange:0,mentalChange:-10,knowledgeChange:30,creditScoreChange:25,consequence:"Правильный шаг! Банк одобрил отсрочку на 3 месяца. Кредитная история не пострадала.",next:4},
+         {text:"Возьму новый кредит в другом банке, чтобы заплатить этот",cashChange:0,mentalChange:-30,knowledgeChange:-25,creditScoreChange:-80,consequence:"Это долговая яма. Кредит для погашения кредита — классическая финансовая кабала.",next:"end_spiral"},
+         {text:"Просто не буду платить и отключу телефон",cashChange:0,mentalChange:-60,knowledgeChange:-40,creditScoreChange:-200,consequence:"Банк передаёт дело коллекторам, начисляются штрафные пени. Кредитная история испорчена на годы.",next:"end_bad"}
+       ]},
+      {id:4,type:"choice",
+       text:"Ты получил отсрочку и нашёл новую работу. Кредит почти выплачен. За телефон заплатил 154 800 ₽ вместо 130 000 ₽ — переплата 18,9%. Что вынесешь из опыта?",
+       hint:"Полная стоимость кредита (ПСК) — главный показатель для сравнения предложений. Банки обязаны указывать её крупным шрифтом.",
+       options:[
+         {text:"Следующую крупную покупку буду копить заранее. Если кредит — только с ПСК не выше инфляции",cashChange:0,mentalChange:25,knowledgeChange:30,creditScoreChange:30,consequence:"Ты извлёк максимум из опыта. Этот урок стоил 24 800 ₽, но знания бесценны.",next:"end_experienced"}
+       ]},
+      {id:5,type:"choice",
+       text:"Ты изучаешь договор FastCash. В мелком шрифте: «страхование — 1,5% от суммы в месяц, комиссия — 500 ₽/мес». Реальная ставка — 28% вместо «0%». Что предпримешь?",
+       hint:"Согласно ФЗ «О потребительском кредите», банк обязан раскрывать ПСК. «Нулевая ставка» без скрытых платежей в России — маркетинговый приём.",
+       options:[
+         {text:"Откажусь — скрытые комиссии делают этот кредит дороже прямого займа",cashChange:0,mentalChange:10,knowledgeChange:30,consequence:"Отлично! Ты раскрыл уловку. Теперь знаешь: всегда читай мелкий шрифт.",next:"end_wise"},
+         {text:"Подпишу — в рекламе же написано «0%», значит так и будет",cashChange:-7000,mentalChange:-30,knowledgeChange:-20,consequence:"Ты попался на маркетинговую ловушку. Реальная переплата больше, чем по честному кредиту.",next:"end_bad"}
+       ]},
+      {id:"end_wise",type:"ending",emotion:"confident",text:"🏆 Финансовый стратег! Ты устоял перед искушением, сэкономил 24 800 ₽ и сохранил чистую кредитную историю.",score:{cash:90,mental:85,knowledge:95}},
+      {id:"end_experienced",type:"ending",emotion:"happy",text:"✅ Опытный заёмщик. Ты прошёл через кредит, встретил мошенников и преодолел потерю работы — и выстоял. Теперь знаешь цену каждого процентного пункта.",score:{cash:65,mental:70,knowledge:90}},
+      {id:"end_scam",type:"ending",emotion:"scared",text:"❌ Жертва мошенников. Немедленно: заблокируй карту, напиши заявление в банк и полицию. Запомни: код из СМС — только для тебя.",score:{cash:10,mental:10,knowledge:40}},
+      {id:"end_spiral",type:"ending",emotion:"scared",text:"⚠️ Долговая спираль. Обратись в банк за реструктуризацией. Закон о банкротстве физических лиц существует для таких ситуаций. Выход есть всегда.",score:{cash:15,mental:20,knowledge:35}},
+      {id:"end_bad",type:"ending",emotion:"sad",text:"❌ Кредитная история под угрозой. Изучи свои права заёмщика: сайт ЦБ РФ, fingramota.org, горячая линия банка.",score:{cash:20,mental:15,knowledge:25}}
+    ]
+  },
+  {
+    id:"investment_start",title:"Инвестиционный старт",subtitle:"От сбережений к прибыли",
+    desc:"Бабушка оставила тебе 150 000 ₽. Деньги лежат и тают: инфляция в GigaCity — 9% в год. Пора сделать деньги работать на тебя.",
+    difficulty:"сложный",startCash:150000,bg:"rgba(45,45,10,.4)",
+    steps:[
+      {id:1,type:"choice",
+       text:"Данные GigaFinance: инфляция — 9% годовых, ключевая ставка ЦБ — 16%. Твои 150 000 ₽ «под матрасом» через год будут стоить как 136 500 ₽ сегодня. Какой ты инвестор?",
+       hint:"Ключевая ставка ЦБ — это цена денег в экономике. При высокой ставке (16%) банковские вклады дают хороший процент, а кредиты дорожают.",
+       options:[
+         {text:"Консервативный: хочу сохранить деньги с минимальным риском",cashChange:0,mentalChange:5,knowledgeChange:10,consequence:"Консервативная стратегия — разумный выбор для новичка.",next:2},
+         {text:"Умеренный: готов на средний риск ради дохода выше инфляции",cashChange:0,mentalChange:5,knowledgeChange:10,consequence:"Умеренная стратегия — золотая середина. Разберёмся с диверсификацией портфеля.",next:3},
+         {text:"Агрессивный: хочу удвоить капитал как можно скорее",cashChange:0,mentalChange:5,knowledgeChange:10,consequence:"Высокий потенциал дохода = высокий риск потери. Посмотрим на практике.",next:4}
+       ]},
+      {id:2,type:"choice",
+       text:"Банк GigaSave предлагает вклад под 14% годовых. На 150 000 ₽ это +21 000 ₽ за год. Инфляция съест 13 500 ₽. Реальный прирост ≈ 7 500 ₽. Государство страхует вклады до 1 400 000 ₽ через АСВ. Как разместишь деньги?",
+       hint:"Реальная доходность = номинальная ставка − инфляция. Вклад под 14% при инфляции 9% даёт реальный прирост +5%.",
+       options:[
+         {text:"Открою вклад на 12 месяцев — надёжно и понятно",cashChange:21000,mentalChange:15,knowledgeChange:15,consequence:"Через год у тебя 171 000 ₽. Деньги обогнали инфляцию. Надёжно и без нервов.",next:6},
+         {text:"Разобью: 100 000 ₽ — вклад, 50 000 ₽ — облигации федерального займа (ОФЗ)",cashChange:18000,mentalChange:10,knowledgeChange:25,consequence:"Диверсификация даже внутри консервативной стратегии снижает риски. ОФЗ — самый надёжный российский инструмент.",next:6}
+       ]},
+      {id:3,type:"choice",
+       text:"ПИФ на индекс Мосбиржи: историческая доходность 15–20% годовых, но в отдельные годы фонд падал на 30–40%. Государство не страхует эти деньги. Как сформируешь портфель?",
+       hint:"Диверсификация — распределение денег между разными инструментами. Потеря в одном не уничтожает всё. Правило: не клади все яйца в одну корзину.",
+       options:[
+         {text:"70 000 ₽ — вклад (страховка), 50 000 ₽ — ПИФ на индекс, 30 000 ₽ — ОФЗ",cashChange:22000,mentalChange:15,knowledgeChange:30,consequence:"Отличная диверсификация! Три инструмента с разным риском. Даже при падении ПИФа — общий портфель в плюсе.",next:7},
+         {text:"Всё 150 000 ₽ в ПИФ: хочу максимум от умеренной стратегии",cashChange:25000,mentalChange:-15,knowledgeChange:-10,consequence:"Повезло: в этом году ПИФ вырос на 17%. Но ты нарушил принцип диверсификации — в плохой год потерял бы всё сразу.",next:7}
+       ]},
+      {id:4,type:"choice",
+       text:"Друг советует «горячий» мемкоин NeonDoge — «вырастет в 10 раз за месяц». Параллельно: акции реальных технологических компаний с волатильностью ±40% годовых. Что выберешь?",
+       hint:"Если кто-то гарантирует огромную доходность без рисков — это признак финансовой пирамиды. Настоящие инвестиции всегда несут риск потери.",
+       options:[
+         {text:"Вложу 150 000 ₽ в NeonDoge — блогеры не могут ошибаться",cashChange:-120000,mentalChange:-60,knowledgeChange:-20,consequence:"NeonDoge рухнул на 80% за неделю — классический pump & dump. Осталось 30 000 ₽. Крипто без анализа = лотерея.",next:"end_gamble"},
+         {text:"50 000 ₽ — акции техкомпаний, 50 000 ₽ — вклад, 50 000 ₽ — пока не трогаю",cashChange:15000,mentalChange:10,knowledgeChange:25,consequence:"Акции выросли на 22%, вклад принёс 7 000 ₽. Даже агрессивный инвестор применил диверсификацию.",next:7},
+         {text:"Изучу компании самостоятельно перед покупкой — без советов блогеров",cashChange:20000,mentalChange:20,knowledgeChange:35,consequence:"Фундаментальный анализ перед покупкой — признак зрелого инвестора. Акции выросли на 26%.",next:7}
+       ]},
+      {id:6,type:"choice",
+       text:"Год прошёл. Вклад сработал. Если каждый год реинвестировать 14%, через 5 лет 150 000 ₽ превратятся в 288 000 ₽ — это магия сложного процента. Что решишь?",
+       hint:"Сложный процент — начисление процентов на уже накопленные проценты. Начни как можно раньше: время работает на тебя.",
+       options:[
+         {text:"Реинвестирую все 171 000 ₽ — запускаю сложный процент",cashChange:21000,mentalChange:20,knowledgeChange:20,consequence:"Превосходно! Каждый год база для начисления процентов растёт.",next:"end_excellent"},
+         {text:"Сниму 21 000 ₽ дохода на себя — первый пассивный доход!",cashChange:21000,mentalChange:25,knowledgeChange:15,consequence:"Деньги работали, пока ты занимался своими делами. Баланс между накоплением и жизнью — тоже мудрость.",next:"end_good"}
+       ]},
+      {id:7,type:"choice",
+       text:"Итог года: диверсифицированный портфель вырос. ЦБ снизил ставку до 14% — доходность вкладов падёт. Акции снова привлекательны. Как скорректируешь портфель?",
+       hint:"Ребалансировка портфеля — периодическая корректировка долей активов. Рекомендуется раз в 6–12 месяцев.",
+       options:[
+         {text:"Увеличу долю акций, уменьшу долю вклада — ставки падают, рынок растёт",cashChange:30000,mentalChange:15,knowledgeChange:25,consequence:"Грамотная ребалансировка! Ты адаптируешь стратегию к изменившимся условиям.",next:"end_excellent"},
+         {text:"Ничего не меняю — портфель и так работает",cashChange:18000,mentalChange:10,knowledgeChange:10,consequence:"Стабильность хороша, но упущенная доходность — тоже потери.",next:"end_good"}
+       ]},
+      {id:"end_excellent",type:"ending",emotion:"happy",text:"🏆 Инвестор будущего! Ты освоил диверсификацию, понял влияние ключевой ставки ЦБ и запустил механизм сложного процента. Через 10 лет такой подход превратит 150 000 ₽ в 500 000+ ₽.",score:{cash:95,mental:90,knowledge:100}},
+      {id:"end_good",type:"ending",emotion:"happy",text:"✅ Осознанный сберегатель. Ты победил инфляцию и получил первый пассивный доход. Следующий шаг — изучи ИИС: налоговый вычет до 52 000 ₽ в год.",score:{cash:75,mental:80,knowledge:80}},
+      {id:"end_gamble",type:"ending",emotion:"sad",text:"❌ Урок стоимостью 120 000 ₽. Мемкоины и советы блогеров — это не инвестиции, это азарт. Настоящие инвестиции «скучны»: вклад, облигации, индексный фонд. Именно скука делает людей богатыми.",score:{cash:10,mental:10,knowledge:40}}
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════════════════════
+//  PIXEL ART SPRITES  12×16 canvas, CSS 120×160 (10× scale)
+// ══════════════════════════════════════════════════════════════
+const C={_:null,H:'#2C1810',h:'#6B3A2A',S:'#FFCC99',s:'#E8A870',E:'#0A0500',W:'#FFF',
+  m:'#CC5555',u:'#FF8888',T:'#21A038',t:'#5BDB6F',P:'#15204A',p:'#1E2D6A',
+  Z:'#080811',z:'#1A1A2E',L:'#0D0D20',d:'#1A1A30'};
+
+const SPRITES={
+  neutral:[
+    [C._,C._,C.H,C.H,C.H,C.H,C.H,C.h,C._,C._,C._,C._],
+    [C._,C.H,C.h,C.h,C.h,C.h,C.h,C.H,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.S,C.S,C.S,C.S,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.s,C.E,C.S,C.S,C.E,C.s,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.S,C.S,C.S,C.S,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.m,C.m,C.m,C.m,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.H,C.H,C.H,C.H,C.H,C.H,C.H,C._,C._,C._],
+    [C._,C._,C.T,C.T,C.T,C.T,C.T,C.T,C._,C._,C._,C._],
+    [C.T,C.T,C.t,C.T,C.T,C.T,C.T,C.t,C.T,C.T,C._,C._],
+    [C.T,C.T,C.T,C.t,C.T,C.T,C.t,C.T,C.T,C.T,C._,C._],
+    [C._,C._,C.T,C.T,C.T,C.T,C.T,C.T,C._,C._,C._,C._],
+    [C._,C._,C.P,C.P,C._,C._,C.P,C.P,C._,C._,C._,C._],
+    [C._,C._,C.P,C.p,C._,C._,C.p,C.P,C._,C._,C._,C._],
+    [C._,C._,C.P,C.P,C._,C._,C.P,C.P,C._,C._,C._,C._],
+    [C._,C._,C.Z,C.Z,C.Z,C.Z,C.Z,C.Z,C._,C._,C._,C._],
+    [C._,C._,C.z,C.Z,C._,C._,C.Z,C.z,C._,C._,C._,C._]
+  ],
+  happy:[
+    [C._,C._,C.H,C.H,C.H,C.H,C.H,C.h,C._,C._,C._,C._],
+    [C._,C.H,C.h,C.h,C.h,C.h,C.h,C.H,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.S,C.S,C.S,C.S,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.s,C.E,C.W,C.W,C.E,C.s,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.s,C.S,C.S,C.s,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.u,C.S,C.W,C.W,C.S,C.u,C.H,C._,C._,C._],
+    [C._,C.H,C.H,C.m,C.H,C.H,C.m,C.H,C.H,C._,C._,C._],
+    [C._,C._,C.T,C.T,C.T,C.T,C.T,C.T,C._,C._,C._,C._],
+    [C.T,C.T,C.t,C.T,C.T,C.T,C.T,C.t,C.T,C.T,C._,C._],
+    [C.T,C.T,C.T,C.t,C.T,C.T,C.t,C.T,C.T,C.T,C._,C._],
+    [C._,C._,C.T,C.T,C.T,C.T,C.T,C.T,C._,C._,C._,C._],
+    [C._,C._,C.P,C.P,C._,C._,C.P,C.P,C._,C._,C._,C._],
+    [C._,C._,C.P,C.p,C._,C._,C.p,C.P,C._,C._,C._,C._],
+    [C._,C._,C.P,C.P,C._,C._,C.P,C.P,C._,C._,C._,C._],
+    [C._,C._,C.Z,C.Z,C.Z,C.Z,C.Z,C.Z,C._,C._,C._,C._],
+    [C._,C._,C.z,C.Z,C._,C._,C.Z,C.z,C._,C._,C._,C._]
+  ],
+  sad:[
+    [C._,C._,C.H,C.H,C.H,C.H,C.H,C.h,C._,C._,C._,C._],
+    [C._,C.H,C.h,C.h,C.h,C.h,C.h,C.H,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.S,C.S,C.S,C.S,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.s,C.s,C.E,C.E,C.s,C.s,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.s,C.S,C.S,C.s,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.S,C.m,C.m,C.S,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.m,C.H,C.H,C.H,C.H,C.m,C.H,C._,C._,C._],
+    [C._,C._,C.T,C.T,C.T,C.T,C.T,C.T,C._,C._,C._,C._],
+    [C.T,C.T,C.t,C.T,C.T,C.T,C.T,C.t,C.T,C.T,C._,C._],
+    [C.T,C.T,C.T,C.t,C.T,C.T,C.t,C.T,C.T,C.T,C._,C._],
+    [C._,C._,C.T,C.T,C.T,C.T,C.T,C.T,C._,C._,C._,C._],
+    [C._,C._,C.P,C.P,C._,C._,C.P,C.P,C._,C._,C._,C._],
+    [C._,C._,C.P,C.p,C._,C._,C.p,C.P,C._,C._,C._,C._],
+    [C._,C._,C.P,C.P,C._,C._,C.P,C.P,C._,C._,C._,C._],
+    [C._,C._,C.Z,C.Z,C.Z,C.Z,C.Z,C.Z,C._,C._,C._,C._],
+    [C._,C._,C.z,C.Z,C._,C._,C.Z,C.z,C._,C._,C._,C._]
+  ],
+  scared:[
+    [C._,C._,C.H,C.H,C.H,C.H,C.H,C.h,C._,C._,C._,C._],
+    [C._,C.H,C.h,C.h,C.h,C.h,C.h,C.H,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.E,C.W,C.W,C.E,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.s,C.E,C.E,C.E,C.E,C.s,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.S,C.S,C.S,C.S,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.m,C.S,C.S,C.m,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.H,C.H,C.m,C.m,C.H,C.H,C.H,C._,C._,C._],
+    [C._,C._,C.T,C.T,C.T,C.T,C.T,C.T,C._,C._,C._,C._],
+    [C.T,C.T,C.t,C.T,C.T,C.T,C.T,C.t,C.T,C.T,C._,C._],
+    [C.T,C.T,C.T,C.t,C.T,C.T,C.t,C.T,C.T,C.T,C._,C._],
+    [C._,C._,C.T,C.T,C.T,C.T,C.T,C.T,C._,C._,C._,C._],
+    [C._,C._,C.P,C.P,C._,C._,C.P,C.P,C._,C._,C._,C._],
+    [C._,C._,C.P,C.p,C._,C._,C.p,C.P,C._,C._,C._,C._],
+    [C._,C._,C.P,C.P,C._,C._,C.P,C.P,C._,C._,C._,C._],
+    [C._,C._,C.Z,C.Z,C.Z,C.Z,C.Z,C.Z,C._,C._,C._,C._],
+    [C._,C._,C.z,C.Z,C._,C._,C.Z,C.z,C._,C._,C._,C._]
+  ],
+  confident:[
+    [C._,C._,C.H,C.H,C.H,C.H,C.H,C.h,C._,C._,C._,C._],
+    [C._,C.H,C.h,C.h,C.h,C.h,C.h,C.H,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.S,C.S,C.S,C.S,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.d,C.Z,C.Z,C.Z,C.Z,C.d,C.H,C._,C._,C._],
+    [C._,C.H,C.d,C.L,C.L,C.L,C.L,C.d,C.H,C._,C._,C._],
+    [C._,C.H,C.S,C.u,C.S,C.S,C.u,C.S,C.H,C._,C._,C._],
+    [C._,C.H,C.H,C.m,C.H,C.H,C.m,C.H,C.H,C._,C._,C._],
+    [C._,C._,C.T,C.T,C.T,C.T,C.T,C.T,C._,C._,C._,C._],
+    [C.T,C.T,C.t,C.T,C.T,C.T,C.T,C.t,C.T,C.T,C._,C._],
+    [C.T,C.T,C.T,C.t,C.T,C.T,C.t,C.T,C.T,C.T,C._,C._],
+    [C._,C._,C.T,C.T,C.T,C.T,C.T,C.T,C._,C._,C._,C._],
+    [C._,C._,C.P,C.P,C._,C._,C.P,C.P,C._,C._,C._,C._],
+    [C._,C._,C.P,C.p,C._,C._,C.p,C.P,C._,C._,C._,C._],
+    [C._,C._,C.P,C.P,C._,C._,C.P,C.P,C._,C._,C._,C._],
+    [C._,C._,C.Z,C.Z,C.Z,C.Z,C.Z,C.Z,C._,C._,C._,C._],
+    [C._,C._,C.z,C.Z,C._,C._,C.Z,C.z,C._,C._,C._,C._]
+  ]
+};
+
+// Walk animation frames — only legs differ from neutral
+const WALK_A = SPRITES.neutral.map((row,y)=>{
+  if(y===13) return [C._,C._,C.P,C.P,C._,C._,C._,C.P,C.P,C.P,C._,C._];
+  if(y===14) return [C._,C._,C.Z,C.Z,C._,C._,C._,C.Z,C.Z,C.Z,C._,C._];
+  if(y===15) return [C._,C.z,C.Z,C._,C._,C._,C._,C._,C.Z,C.z,C._,C._];
+  return row;
+});
+const WALK_B = SPRITES.neutral.map((row,y)=>{
+  if(y===13) return [C.P,C.P,C.P,C._,C._,C._,C.P,C.P,C._,C._,C._,C._];
+  if(y===14) return [C.Z,C.Z,C.Z,C._,C._,C._,C.Z,C.Z,C._,C._,C._,C._];
+  if(y===15) return [C._,C.z,C.Z,C._,C._,C._,C._,C.Z,C.z,C._,C._,C._];
+  return row;
+});
+
+let _animTimer=null,_animPhase=0;
+function stopCharAnim(){if(_animTimer){clearInterval(_animTimer);_animTimer=null;}}
+function startCharAnim(emotion){
+  stopCharAnim();
+  if(emotion==='neutral'){
+    const frames=[SPRITES.neutral,WALK_A,SPRITES.neutral,WALK_B];
+    _animPhase=0;
+    _animTimer=setInterval(()=>{
+      _animPhase=(_animPhase+1)%4;
+      drawSpriteRaw('char-canvas',frames[_animPhase]);
+    },380);
+  }
+}
+function drawSpriteRaw(canvasId,sprite){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,12,16);
+  sprite.forEach((row,y)=>row.forEach((col,x)=>{if(col){ctx.fillStyle=col;ctx.fillRect(x,y,1,1)}}));
+}
+function drawSprite(canvasId,emotion){
+  stopCharAnim();
+  drawSpriteRaw(canvasId,SPRITES[emotion]||SPRITES.neutral);
+  if(canvasId==='char-canvas') startCharAnim(emotion);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════
+let state={scenario:null,cash:0,mental:50,knowledge:0,creditScore:700,questIdx:0};
+function getStep(id){return state.scenario.steps.find(s=>String(s.id)===String(id))}
+
+// ══════════════════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function fmtCash(n){
+  const abs=Math.abs(Math.round(n));
+  return (n<0?'–':'')+'₽'+abs.toLocaleString('ru-RU');
+}
+
+function animPop(el){
+  el.classList.remove('stat-pop');
+  void el.offsetWidth;
+  el.classList.add('stat-pop');
+  setTimeout(()=>el.classList.remove('stat-pop'),400);
+}
+
+function updateResUI(anim){
+  const rCash=document.getElementById('r-cash');
+  const rMent=document.getElementById('r-mental');
+  const rKnow=document.getElementById('r-know');
+  const rCred=document.getElementById('r-cred');
+  const barM=document.getElementById('bar-m');
+  const barK=document.getElementById('bar-k');
+  const barC=document.getElementById('bar-c');
+
+  rCash.textContent=fmtCash(state.cash);
+  rMent.textContent=Math.round(state.mental);
+  rKnow.textContent=Math.round(state.knowledge);
+  rCred.textContent=Math.round(state.creditScore);
+
+  const mp=Math.max(0,Math.min(100,state.mental));
+  const kp=Math.max(0,Math.min(100,state.knowledge));
+  const cp=Math.max(0,Math.min(100,(state.creditScore-300)/5.5));
+  barM.style.width=mp+'%';
+  barK.style.width=kp+'%';
+  barC.style.width=cp+'%';
+
+  if(anim){
+    [rCash,rMent,rKnow,rCred].forEach(el=>animPop(el));
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TOASTS
+// ══════════════════════════════════════════════════════════════
+function toast(lines){
+  const wrap=document.getElementById('toasts');
+  const t=document.createElement('div');
+  t.className='toast';
+  t.innerHTML=lines.map(l=>`<div class="t-line ${l.cls}">${l.txt}</div>`).join('');
+  wrap.appendChild(t);
+  setTimeout(()=>{t.classList.add('hide');setTimeout(()=>t.remove(),350)},2600);
+}
+function changeLines(cd,md,kd,sd=0){
+  const L=[];
+  if(cd!==0)L.push({cls:cd>0?'t-pos':'t-neg',txt:`💰 ${cd>0?'+':''}${fmtCash(cd)}`});
+  if(md!==0)L.push({cls:md>0?'t-pos':'t-neg',txt:`😊 ${md>0?'+':''}${Math.round(md)} счастья`});
+  if(kd!==0)L.push({cls:kd>0?'t-pos':'t-neg',txt:`🧠 ${kd>0?'+':''}${Math.round(kd)} FinIQ`});
+  if(sd!==0)L.push({cls:sd>0?'t-pos':'t-neg',txt:`💳 Credit Score ${sd>0?'+':''}${Math.round(sd)}`});
+  return L;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MENU
+// ══════════════════════════════════════════════════════════════
+function buildMenu(){
+  const grid=document.getElementById('quest-grid');
+  grid.innerHTML='';
+  const diffCls={легкий:'d-easy',средний:'d-med',сложный:'d-hard'};
+  SCENARIOS.forEach((sc,i)=>{
+    const card=document.createElement('div');
+    card.className='quest-card';
+    card.innerHTML=`
+      <div class="qc-num">КВЕСТ ${i+1}</div>
+      <div class="qc-title">${sc.title}</div>
+      <div class="qc-desc">${sc.desc}</div>
+      <span class="qc-diff ${diffCls[sc.difficulty]||'d-easy'}">${sc.difficulty}</span>`;
+    card.onclick=()=>startQuest(i);
+    grid.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  START QUEST
+// ══════════════════════════════════════════════════════════════
+function startQuest(idx){
+  state.scenario=SCENARIOS[idx];
+  state.questIdx=idx;
+  state.cash=state.scenario.startCash;
+  state.mental=50;
+  state.knowledge=0;
+  state.creditScore=700;
+
+  document.getElementById('game-main').style.background=
+    `linear-gradient(160deg, var(--bg) 0%, ${state.scenario.bg} 100%)`;
+
+  const labels=['КВЕСТ 1 — БЮДЖЕТ','КВЕСТ 2 — КРЕДИТЫ','КВЕСТ 3 — ИНВЕСТИЦИИ'];
+  document.getElementById('intro-label').textContent=labels[idx];
+  document.getElementById('intro-big').textContent=state.scenario.title;
+  document.getElementById('intro-small').textContent=state.scenario.subtitle;
+  showScreen('scr-intro');
+
+  const bar=document.getElementById('intro-bar');
+  bar.style.width='0';
+  setTimeout(()=>{bar.style.width='100%'},50);
+  setTimeout(()=>loadStep(1),2100);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LOAD STEP
+// ══════════════════════════════════════════════════════════════
+const BADGE_MAP={
+  choice:'b-choice',event:'b-event',crisis:'b-crisis',ending:'b-end',
+  briefing:'b-info',conservative_path:'b-info',moderate_path:'b-info',
+  aggressive_path:'b-info',investigation:'b-choice',reflection:'b-info',
+  crisis_event:'b-crisis',year_result:'b-end',portfolio_review:'b-info',final_reflection:'b-info'
+};
+const BADGE_TXT={
+  choice:'ВЫБОР',event:'СОБЫТИЕ',crisis:'КРИЗИС',ending:'ИТОГ',
+  briefing:'БРИФИНГ',conservative_path:'ПУТЬ',moderate_path:'ПУТЬ',
+  aggressive_path:'ПУТЬ',investigation:'РАССЛЕДОВАНИЕ',reflection:'РЕФЛЕКСИЯ',
+  crisis_event:'КРИЗИС',year_result:'ИТОГ ГОДА',portfolio_review:'АНАЛИЗ',final_reflection:'ВЫВОДЫ'
+};
+const EMOTION_MAP={
+  end_excellent:'happy',end_wise:'confident',end_experienced:'confident',
+  end_good:'happy',end_medium:'neutral',end_bad:'sad',
+  end_scam:'scared',end_spiral:'scared',end_gamble:'sad'
+};
+
+function loadStep(stepId){
+  showScreen('scr-game');
+  const step=getStep(stepId);
+  if(!step){console.warn('Step not found:',stepId);return;}
+  if(step.type==='ending'){showEnding(step);return;}
+
+  const emo=typeof stepId==='string'?(EMOTION_MAP[stepId]||'neutral'):'neutral';
+  drawSprite('char-canvas',emo);
+  document.getElementById('emo-bubble').textContent=
+    {neutral:'💭',happy:'😊',sad:'😟',scared:'😨',confident:'😎'}[emo]||'💭';
+
+  const badge=document.getElementById('step-badge');
+  badge.className='step-badge '+(BADGE_MAP[step.type]||'b-info');
+  badge.textContent=BADGE_TXT[step.type]||'ШАГ';
+
+  document.getElementById('step-text').textContent=step.text;
+
+  const hp=document.getElementById('hint-panel');
+  if(step.hint){
+    document.getElementById('hint-txt').textContent=step.hint;
+    hp.style.display='flex';
+  }else{
+    hp.style.display='none';
+  }
+
+  const area=document.getElementById('choices-area');
+  area.innerHTML='';
+  (step.options||[]).forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';
+    btn.textContent=opt.text;
+    btn.onclick=()=>choose(step,opt);
+    area.appendChild(btn);
+  });
+
+  updateResUI(false);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CHOICE
+// ══════════════════════════════════════════════════════════════
+function choose(step,opt){
+  document.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+  const cd=opt.cashChange||0,md=opt.mentalChange||0,kd=opt.knowledgeChange||0,sd=opt.creditScoreChange||0;
+  state.cash+=cd;
+  state.mental=Math.max(0,Math.min(100,state.mental+md));
+  state.knowledge=Math.max(0,Math.min(100,state.knowledge+kd));
+  state.creditScore=Math.max(300,Math.min(850,state.creditScore+sd));
+  updateResUI(true);
+  toast(changeLines(cd,md,kd,sd));
+  showConsequence(opt.consequence,cd,md,kd,sd,()=>loadStep(opt.next));
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CONSEQUENCE POPUP
+// ══════════════════════════════════════════════════════════════
+function showConsequence(text,cd,md,kd,sd,onContinue){
+  const overlay=document.createElement('div');
+  overlay.className='cons-overlay';
+  const stats=[
+    cd!==0?`<span class="cons-stat ${cd>0?'cs-pos':'cs-neg'}">💰 ${cd>0?'+':''}${fmtCash(cd)}</span>`:'',
+    md!==0?`<span class="cons-stat ${md>0?'cs-pos':'cs-neg'}">😊 ${md>0?'+':''}${Math.round(md)}</span>`:'',
+    kd!==0?`<span class="cons-stat ${kd>0?'cs-pos':'cs-neg'}">🧠 ${kd>0?'+':''}${Math.round(kd)}</span>`:'',
+    sd!==0?`<span class="cons-stat ${sd>0?'cs-pos':'cs-neg'}">💳 ${sd>0?'+':''}${Math.round(sd)}</span>`:''
+  ].filter(Boolean).join('');
+  overlay.innerHTML=`
+    <div class="cons-card">
+      <p class="cons-text">${text}</p>
+      ${stats?`<div class="cons-stats">${stats}</div>`:''}
+      <button class="cons-btn">Продолжить →</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  let used=false;
+  const go=()=>{if(used)return;used=true;overlay.style.opacity='0';overlay.style.transition='opacity .15s';setTimeout(()=>{overlay.remove();onContinue()},160)};
+  overlay.querySelector('.cons-btn').onclick=go;
+  setTimeout(go,4200);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ENDING
+// ══════════════════════════════════════════════════════════════
+function showEnding(step){
+  const emo=step.emotion||EMOTION_MAP[step.id]||'neutral';
+  drawSprite('end-canvas',emo);
+  const titles={happy:'🎉 ОТЛИЧНАЯ РАБОТА!',confident:'😎 МАСТЕРСКИЙ РЕЗУЛЬТАТ!',neutral:'📊 КВЕСТ ЗАВЕРШЁН',sad:'😔 УРОК ПОЛУЧЕН',scared:'😨 ЧТО-ТО ПОШЛО НЕ ТАК'};
+  document.getElementById('end-title').textContent=titles[emo]||'ИТОГ';
+  document.getElementById('end-text').textContent=step.text;
+  const sc=step.score||{cash:50,mental:50,knowledge:50};
+  setTimeout(()=>{
+    document.getElementById('esb-cash').style.height=sc.cash+'%';
+    document.getElementById('esb-ment').style.height=sc.mental+'%';
+    document.getElementById('esb-know').style.height=sc.knowledge+'%';
+    document.getElementById('esn-cash').textContent=sc.cash;
+    document.getElementById('esn-ment').textContent=sc.mental;
+    document.getElementById('esn-know').textContent=sc.knowledge;
+  },200);
+
+  const btns=document.getElementById('end-btns');
+  btns.innerHTML='';
+
+  if(state.questIdx<SCENARIOS.length-1&&(emo==='happy'||emo==='confident')){
+    const nb=document.createElement('button');
+    nb.className='btn-pri';nb.style.background='#28C046';nb.style.boxShadow='0 4px 18px rgba(33,160,56,.45)';
+    nb.textContent='Следующий квест →';nb.onclick=()=>startQuest(state.questIdx+1);
+    btns.appendChild(nb);
+  }
+  const rb=document.createElement('button');
+  rb.className='btn-pri';rb.textContent='Пройти ещё раз';rb.onclick=()=>startQuest(state.questIdx);
+  btns.appendChild(rb);
+  const mb=document.createElement('button');
+  mb.className='btn-sec';mb.textContent='← Выбор квеста';mb.onclick=()=>showScreen('scr-menu');
+  btns.appendChild(mb);
+
+  showScreen('scr-end');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+buildMenu();
+drawSprite('char-canvas','neutral');
+drawSprite('end-canvas','neutral');
+</script>
+</body>
+</html>
