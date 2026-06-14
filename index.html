@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GigaLife: PROденьги</title>
+<title>ПРО Деньги</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html{font-size:18px}
@@ -32,9 +32,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
     var(--bg);
   align-items:center;justify-content:center;gap:28px;padding:32px
 }
-.logo{font-size:clamp(3rem,6vw,5rem);font-weight:700;letter-spacing:2px;
-  text-shadow:0 0 24px var(--pri),0 0 60px var(--pri)}
-.logo span{color:var(--acc);text-shadow:0 0 24px var(--acc)}
+.brand{display:flex;flex-direction:column;align-items:center;gap:14px}
+.logo-emblem{width:140px;height:140px;filter:drop-shadow(0 0 28px rgba(33,160,56,.4))}
+.logo{font-size:clamp(2.6rem,6vw,4.4rem);font-weight:700;letter-spacing:3px}
+.logo .pro{color:var(--acc);text-shadow:0 0 24px var(--acc)}
+.logo .den{color:var(--sec);text-shadow:0 0 24px var(--pri)}
 .menu-sub{color:var(--dim);font-size:1.1rem;letter-spacing:4px;text-transform:uppercase;margin-top:6px;text-align:center}
 .quest-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;max-width:980px;width:100%}
 
@@ -72,8 +74,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
   background:rgba(14,28,18,.97);border-bottom:2px solid var(--cbrd);
   gap:14px;flex-shrink:0;backdrop-filter:blur(12px);overflow:hidden
 }
-.res-logo{font-size:1.2rem;font-weight:700;flex:1;letter-spacing:1px;white-space:nowrap;min-width:0}
-.res-logo span{color:var(--acc)}
+.res-logo{font-size:1.2rem;font-weight:700;flex:1;letter-spacing:1px;white-space:nowrap;min-width:0;
+  display:flex;align-items:center;gap:9px}
+.res-emblem{width:32px;height:32px;flex-shrink:0}
+.res-logo .pro{color:var(--acc)}
+.res-logo .den{color:var(--sec)}
 
 /* Stat cards — top right, big and visible */
 .stat-cards{display:flex;gap:8px;flex-shrink:0}
@@ -257,6 +262,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
   #scr-menu{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;
     padding:28px 16px 40px;gap:20px}
   .logo{font-size:2.1rem;letter-spacing:1px}
+  .logo-emblem{width:96px;height:96px}
+  .res-emblem{width:26px;height:26px}
   .menu-sub{font-size:.85rem;letter-spacing:2px}
   .quest-grid{grid-template-columns:1fr;gap:14px}
   .quest-card{padding:20px}
@@ -512,8 +519,31 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 
 <!-- ════ MENU ════ -->
 <div id="scr-menu" class="screen active">
-  <div style="text-align:center">
-    <div class="logo">GigaLife: <span>PRO</span>деньги</div>
+  <div class="brand">
+    <svg class="logo-emblem" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="ПРО Деньги">
+      <defs>
+        <radialGradient id="emInner" cx="50%" cy="38%" r="72%">
+          <stop offset="0%" stop-color="#1B2E54"/>
+          <stop offset="100%" stop-color="#0C1730"/>
+        </radialGradient>
+        <linearGradient id="emArea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#21A038" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#21A038" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <circle cx="50" cy="50" r="36" fill="url(#emInner)"/>
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#FFD700" stroke-width="6" stroke-dasharray="4.2 3.1"/>
+      <circle cx="50" cy="50" r="33" fill="none" stroke="#C9A23A" stroke-width="0.7" opacity="0.8"/>
+      <text x="50" y="40" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="bold" font-size="20" fill="#FFD700">₽</text>
+      <path d="M30 64 L38 58 L46 60 L54 50 L62 54 L70 44 L70 70 L30 70 Z" fill="url(#emArea)"/>
+      <polyline points="30,64 38,58 46,60 54,50 62,54 70,44 74,40" fill="none" stroke="#36E05A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <polygon points="74,40 67.5,40.5 72,46" fill="#36E05A"/>
+      <g fill="#0C1730" stroke="#36E05A" stroke-width="2">
+        <circle cx="30" cy="64" r="2.6"/><circle cx="38" cy="58" r="2.6"/><circle cx="46" cy="60" r="2.6"/>
+        <circle cx="54" cy="50" r="2.6"/><circle cx="62" cy="54" r="2.6"/><circle cx="70" cy="44" r="2.6"/>
+      </g>
+    </svg>
+    <div class="logo"><span class="pro">ПРО</span> <span class="den">Деньги</span></div>
     <p class="menu-sub">Симулятор финансовой грамотности &nbsp;·&nbsp; Выберите квест</p>
   </div>
   <div class="quest-grid" id="quest-grid"></div>
@@ -534,7 +564,27 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 
   <!-- top bar with stats -->
   <div class="res-bar">
-    <div class="res-logo">GigaLife: <span>PRO</span>деньги</div>
+    <div class="res-logo">
+      <svg class="res-emblem" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="emInner2" cx="50%" cy="38%" r="72%">
+            <stop offset="0%" stop-color="#1B2E54"/>
+            <stop offset="100%" stop-color="#0C1730"/>
+          </radialGradient>
+          <linearGradient id="emArea2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#21A038" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#21A038" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="36" fill="url(#emInner2)"/>
+        <circle cx="50" cy="50" r="40" fill="none" stroke="#FFD700" stroke-width="6" stroke-dasharray="4.2 3.1"/>
+        <text x="50" y="40" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="bold" font-size="20" fill="#FFD700">₽</text>
+        <path d="M30 64 L38 58 L46 60 L54 50 L62 54 L70 44 L70 70 L30 70 Z" fill="url(#emArea2)"/>
+        <polyline points="30,64 38,58 46,60 54,50 62,54 70,44 74,40" fill="none" stroke="#36E05A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <polygon points="74,40 67.5,40.5 72,46" fill="#36E05A"/>
+      </svg>
+      <span><span class="pro">ПРО</span> <span class="den">Деньги</span></span>
+    </div>
 
     <div class="stat-cards">
       <!-- CASH → КАПИТАЛ -->
